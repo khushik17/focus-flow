@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 const AUTH_STORAGE_KEY = "task-orbit-auth-profile";
+const FILTER_PRESET_STORAGE_KEY = "task-orbit-filter-presets";
 const PROTECTED_PAGES = new Set(["dashboard", "tasks", "analytics"]);
 
 const defaultFilters = {
@@ -61,6 +62,36 @@ const playReminder = () => {
   }
 };
 
+const formatRelativeTime = (value, futureLabel = "in", pastLabel = "ago") => {
+  if (!value) return "";
+  const target = new Date(value);
+  if (Number.isNaN(target.getTime())) return "";
+
+  const now = new Date();
+  const diffMs = target.getTime() - now.getTime();
+  const diffAbs = Math.abs(diffMs);
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  let unit = "min";
+  let amount = Math.round(diffAbs / minute);
+
+  if (diffAbs >= day) {
+    unit = "day";
+    amount = Math.round(diffAbs / day);
+  } else if (diffAbs >= hour) {
+    unit = "hour";
+    amount = Math.round(diffAbs / hour);
+  }
+
+  const unitText = amount === 1 ? unit : `${unit}s`;
+  if (diffMs >= 0) {
+    return `${futureLabel} ${amount} ${unitText}`;
+  }
+  return `${amount} ${unitText} ${pastLabel}`;
+};
+
 export default function App() {
   const [page, setPage] = useState("landing");
   const [tasks, setTasks] = useState([]);
@@ -72,6 +103,16 @@ export default function App() {
   const [authMode, setAuthMode] = useState("login");
   const [authOpen, setAuthOpen] = useState(false);
   const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });
+  const [savedPresets, setSavedPresets] = useState(() => {
+    try {
+      const raw = localStorage.getItem(FILTER_PRESET_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+  const [selectedPresetId, setSelectedPresetId] = useState("");
   const [profile, setProfile] = useState(() => {
     try {
       const raw = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -308,6 +349,40 @@ export default function App() {
     }
   };
 
+  const saveCurrentPreset = () => {
+    const presetName = window.prompt("Preset name?");
+    if (!presetName || !presetName.trim()) return;
+
+    const nextPreset = {
+      id: String(Date.now()),
+      name: presetName.trim(),
+      filters: { ...filters }
+    };
+
+    const next = [...savedPresets, nextPreset];
+    setSavedPresets(next);
+    setSelectedPresetId(nextPreset.id);
+    localStorage.setItem(FILTER_PRESET_STORAGE_KEY, JSON.stringify(next));
+    setMessage("Preset saved.");
+  };
+
+  const applySelectedPreset = () => {
+    if (!selectedPresetId) return;
+    const preset = savedPresets.find((item) => item.id === selectedPresetId);
+    if (!preset) return;
+    setFilters({ ...preset.filters });
+    setMessage(`Preset applied: ${preset.name}`);
+  };
+
+  const deleteSelectedPreset = () => {
+    if (!selectedPresetId) return;
+    const next = savedPresets.filter((item) => item.id !== selectedPresetId);
+    setSavedPresets(next);
+    setSelectedPresetId("");
+    localStorage.setItem(FILTER_PRESET_STORAGE_KEY, JSON.stringify(next));
+    setMessage("Preset deleted.");
+  };
+
   const categories = useMemo(() => {
     const set = new Set();
     tasks.forEach((task) => {
@@ -481,34 +556,59 @@ export default function App() {
         )}
 
         {page === "dashboard" && (
-          <section className="panel">
-            <h2>Dashboard</h2>
+          <section className="panel dashboard-panel">
+            <div className="section-head">
+              <h2>Dashboard</h2>
+              <p>Track work health in one glance</p>
+            </div>
             <div className="stats-grid">
               <article><span>{analytics.total}</span><small>Total</small></article>
               <article><span>{analytics.open}</span><small>Open</small></article>
               <article><span>{analytics.completed}</span><small>Completed</small></article>
               <article><span>{analytics.overdue}</span><small>Overdue</small></article>
             </div>
-            <h3>Recent tasks</h3>
-            <ul className="list">
+
+            <div className="quick-insights">
+              <div>
+                <h4>Completion rate</h4>
+                <p>{analytics.completionRate}% done</p>
+              </div>
+              <div>
+                <h4>Due soon</h4>
+                <p>{analytics.dueSoon} task(s) in 48h</p>
+              </div>
+            </div>
+
+            <h3 className="subhead">Recent tasks</h3>
+            <ul className="recent-grid">
               {visibleTasks.slice(0, 5).map((task) => (
-                <li key={task._id}>{task.title}</li>
+                <li key={task._id} className="recent-item">
+                  <strong>{task.title}</strong>
+                  <div className="meta">
+                    <span>{task.category || "general"}</span>
+                    <span>{task.priority}</span>
+                    <span>{task.completed ? "done" : "open"}</span>
+                  </div>
+                </li>
               ))}
-              {visibleTasks.length === 0 ? <li>No tasks yet.</li> : null}
+              {visibleTasks.length === 0 ? <li className="recent-item">No tasks yet.</li> : null}
             </ul>
           </section>
         )}
 
         {page === "tasks" && (
           <div className="tasks-layout">
-            <section className="panel">
-              <h2>{editingId ? "Edit task" : "Create task"}</h2>
+            <section className="panel tasks-create-panel">
+              <div className="section-head">
+                <h2>{editingId ? "Edit task" : "Create task"}</h2>
+                <p>Capture title, priority, deadline, reminder</p>
+              </div>
               <form className="form" onSubmit={submitTask}>
                 <label>Title *</label>
-                <input value={form.title} onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))} required />
+                <input placeholder="e.g. Finish API docs" value={form.title} onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))} required />
 
                 <label>Description</label>
-                <textarea rows={3} value={form.description} onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))} />
+                <textarea rows={3} placeholder="Add useful details for this task" value={form.description} onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))} />
 
                 <div className="two-col">
                   <div>
@@ -548,8 +648,11 @@ export default function App() {
               </form>
             </section>
 
-            <section className="panel">
-              <h2>All tasks</h2>
+            <section className="panel tasks-all-panel">
+              <div className="section-head">
+                <h2>All tasks</h2>
+                <p>Search, filter, sort, then take action quickly</p>
+              </div>
               <div className="filters">
                 <input placeholder="Search" value={filters.q} onChange={(e) => setFilters((s) => ({ ...s, q: e.target.value }))} />
                 <select value={filters.status} onChange={(e) => setFilters((s) => ({ ...s, status: e.target.value }))}>
@@ -581,6 +684,18 @@ export default function App() {
                 </select>
               </div>
 
+              <div className="preset-row">
+                <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)}>
+                  <option value="">Saved presets</option>
+                  {savedPresets.map((preset) => (
+                    <option key={preset.id} value={preset.id}>{preset.name}</option>
+                  ))}
+                </select>
+                <button className="btn ghost" type="button" onClick={saveCurrentPreset}>Save</button>
+                <button className="btn ghost" type="button" onClick={applySelectedPreset}>Apply</button>
+                <button className="btn danger" type="button" onClick={deleteSelectedPreset}>Delete</button>
+              </div>
+
               <ul className="task-list">
                 {visibleTasks.map((task) => (
                   <li key={task._id} className={isOverdue(task) ? "task overdue" : "task"}>
@@ -591,6 +706,8 @@ export default function App() {
                         <span>{task.category || "Uncategorized"}</span>
                         <span>{task.priority}</span>
                         <span>{task.completed ? "completed" : "open"}</span>
+                        {task.dueDate ? <span className="due-chip">due {formatRelativeTime(task.dueDate)}</span> : null}
+                        {task.reminderAt ? <span className="alarm-chip">alarm {formatRelativeTime(task.reminderAt)}</span> : null}
                       </div>
                     </div>
                     <div className="row-actions">
@@ -607,14 +724,17 @@ export default function App() {
         )}
 
         {page === "analytics" && (
-          <section className="panel">
-            <h2>Analytics</h2>
+          <section className="panel analytics-panel">
+            <div className="section-head">
+              <h2>Analytics</h2>
+              <p>See momentum across completion and categories</p>
+            </div>
             <div className="stats-grid">
               <article><span>{analytics.completionRate}%</span><small>Completion</small></article>
               <article><span>{analytics.overdue}</span><small>Overdue</small></article>
               <article><span>{analytics.dueSoon}</span><small>Due soon</small></article>
             </div>
-            <h3>Category load</h3>
+            <h3 className="subhead">Category load</h3>
             <div className="bars">
               {Object.entries(analytics.byCategory).map(([name, count]) => {
                 const width = analytics.total ? Math.max(10, Math.round((count / analytics.total) * 100)) : 0;
