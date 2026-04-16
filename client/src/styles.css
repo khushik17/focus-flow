@@ -565,17 +565,28 @@ h3 {
   display: grid;
   grid-template-columns: minmax(320px, 380px) 1fr;
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .tasks-layout > .panel {
   min-width: 0;
 }
 
+.tasks-create-panel,
+.tasks-all-panel {
+  height: 72vh;
+  max-height: 760px;
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
 .form {
   display: grid;
   gap: 10px;
   min-width: 0;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 label {
@@ -635,6 +646,22 @@ select:focus {
   list-style: none;
   display: grid;
   gap: 10px;
+  flex: 1;
+  overflow: auto;
+}
+
+.pagination-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pagination-row span {
+  font-size: 0.88rem;
+  color: var(--muted);
+  font-weight: 700;
 }
 
 .task {
@@ -776,6 +803,13 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
+  .tasks-create-panel,
+  .tasks-all-panel {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+  }
+
   .section-head {
     flex-direction: column;
     align-items: flex-start;
@@ -830,6 +864,11 @@ select:focus {
 
   .preset-row {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .pagination-row {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .stats-grid {

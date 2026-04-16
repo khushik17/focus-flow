@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 const AUTH_STORAGE_KEY = "task-orbit-auth-profile";
 const FILTER_PRESET_STORAGE_KEY = "task-orbit-filter-presets";
 const PROTECTED_PAGES = new Set(["dashboard", "tasks", "analytics"]);
+const TASKS_PER_PAGE = 4;
 
 const defaultFilters = {
   q: "",
@@ -113,6 +114,7 @@ export default function App() {
     }
   });
   const [selectedPresetId, setSelectedPresetId] = useState("");
+  const [currentTaskPage, setCurrentTaskPage] = useState(1);
   const [profile, setProfile] = useState(() => {
     try {
       const raw = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -425,6 +427,23 @@ export default function App() {
     return sorted;
   }, [tasks, filters]);
 
+  const totalTaskPages = Math.max(1, Math.ceil(visibleTasks.length / TASKS_PER_PAGE));
+
+  const paginatedTasks = useMemo(() => {
+    const start = (currentTaskPage - 1) * TASKS_PER_PAGE;
+    return visibleTasks.slice(start, start + TASKS_PER_PAGE);
+  }, [visibleTasks, currentTaskPage]);
+
+  useEffect(() => {
+    setCurrentTaskPage(1);
+  }, [filters.q, filters.status, filters.priority, filters.category, filters.sortBy]);
+
+  useEffect(() => {
+    if (currentTaskPage > totalTaskPages) {
+      setCurrentTaskPage(totalTaskPages);
+    }
+  }, [currentTaskPage, totalTaskPages]);
+
   const analytics = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter((task) => task.completed).length;
@@ -697,7 +716,7 @@ export default function App() {
               </div>
 
               <ul className="task-list">
-                {visibleTasks.map((task) => (
+                {paginatedTasks.map((task) => (
                   <li key={task._id} className={isOverdue(task) ? "task overdue" : "task"}>
                     <div>
                       <h3>{task.title}</h3>
@@ -719,6 +738,28 @@ export default function App() {
                 ))}
                 {visibleTasks.length === 0 ? <li className="task">No tasks found.</li> : null}
               </ul>
+
+              {visibleTasks.length > 0 ? (
+                <div className="pagination-row">
+                  <button
+                    className="btn ghost"
+                    type="button"
+                    disabled={currentTaskPage <= 1}
+                    onClick={() => setCurrentTaskPage((prev) => Math.max(1, prev - 1))}
+                  >
+                    Prev
+                  </button>
+                  <span>Page {currentTaskPage} of {totalTaskPages}</span>
+                  <button
+                    className="btn ghost"
+                    type="button"
+                    disabled={currentTaskPage >= totalTaskPages}
+                    onClick={() => setCurrentTaskPage((prev) => Math.min(totalTaskPages, prev + 1))}
+                  >
+                    Next
+                  </button>
+                </div>
+              ) : null}
             </section>
           </div>
         )}
