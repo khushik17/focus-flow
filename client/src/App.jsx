@@ -428,53 +428,53 @@ export default function App() {
 
               <div className="landing-collage" aria-hidden="true">
                 <article className="collage-card card-a">
-                  <small>Note</small>
-                  <h3>Capture ideas fast</h3>
+                  <small>Create</small>
+                  <h3>Add tasks with priority</h3>
                 </article>
                 <article className="collage-card card-b">
-                  <small>Book club</small>
-                  <h3>Draft chapter notes</h3>
+                  <small>Organize</small>
+                  <h3>Filter by status & category</h3>
                 </article>
                 <article className="collage-card card-c">
-                  <small>Let it flow</small>
-                  <h3>Brainstorm concepts</h3>
+                  <small>Track</small>
+                  <h3>Mark tasks as complete</h3>
                 </article>
                 <article className="collage-card card-d">
-                  <small>Reminder</small>
-                  <h3>Save sparks before they vanish</h3>
+                  <small>Remind</small>
+                  <h3>Get alerts for due tasks</h3>
                 </article>
-                <span className="sticky left">Write it now, shape it later.</span>
-                <span className="sticky right">From messy thought to action plan.</span>
+                <span className="sticky left">Plan it, track it, complete it.</span>
+                <span className="sticky right">From ideas to accomplished goals.</span>
               </div>
             </section>
 
             <section className="panel landing landing-story">
               <div>
-                <h3>Transform chaos into creativity</h3>
+                <h3>Transform your task list into achievement</h3>
                 <div className="story-list">
-                  <p>Throw your thoughts into an infinite canvas and watch them evolve.</p>
-                  <p>Turn scattered ideas into coherent plans with filters and structure.</p>
-                  <p>Save anything that sparks creativity, then execute with reminders.</p>
-                  <p>Track progress with dashboard and analytics without losing context.</p>
+                  <p>Create tasks with priority levels and due dates to stay focused.</p>
+                  <p>Organize with categories and filter to find what matters most.</p>
+                  <p>Set reminders so nothing important gets left behind.</p>
+                  <p>Track progress with dashboard analytics without any distractions.</p>
                 </div>
               </div>
               <div className="story-art" aria-hidden="true">
                 <div className="dot pink"></div>
                 <div className="dot yellow"></div>
                 <div className="dot gray"></div>
-                <div className="scribble">notes + tasks + reminders</div>
-                <div className="badge-card">Creative board</div>
+                <div className="scribble">create + organize + complete</div>
+                <div className="badge-card">Task Master</div>
               </div>
             </section>
 
             <section className="panel landing landing-search">
               <div>
-                <h3>Turn midnight musings into morning action plans</h3>
-                <p>Wide open spaces for brainstorming, then smart structure for execution.</p>
+                <h3>Stay on top of your goals, every single day</h3>
+                <p>Smart task management that keeps you motivated and organized.</p>
               </div>
               <div className="search-strip">
                 <button className="visit-site" onClick={() => showPage("dashboard")}>Visit site</button>
-                <div className="search-mock">Search ideas, tasks, reminders</div>
+                <div className="search-mock">Search & filter your tasks</div>
               </div>
             </section>
           </>
